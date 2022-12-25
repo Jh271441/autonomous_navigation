@@ -234,7 +234,7 @@ class Predictor:
         while self.bch_safety_check(self.v, self.w, 1, 0) == 0:
             # new recovery: just turn in place
             if ctr < 1:
-                print("Recovery: Turn in Place")
+                # print("Recovery: Turn in Place")
                 self.v = 0
                 self.w = 2 * direction_angle
                 # if self.w > 0 and self.w < 0.1:
@@ -243,12 +243,12 @@ class Predictor:
                 #     self.w = -0.1
                 ctr += 1
             elif ctr >= 1:
-                print("Recovery: Back up")
+                # print("Recovery: Back up")
                 self.v = -0.2
                 self.w = 0
                 break
 
-        print("[INFO] current v: {:4.2f}, w: {:5.2f}".format(self.v, self.w))
+        # print("[INFO] current v: {:4.2f}, w: {:5.2f}".format(self.v, self.w))
 
 
 if __name__ == '__main__':

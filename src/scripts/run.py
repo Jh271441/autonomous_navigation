@@ -119,7 +119,7 @@ if __name__ == "__main__":
         curr_time = rospy.get_time()
         pos = gazebo_sim.get_model_state().pose.position
         curr_coor = (pos.x, pos.y)
-        print("Time: %.2f (s), x: %.2f (m), y: %.2f (m)" %(curr_time - start_time, *curr_coor), end="\r")
+        print("Time: %.2f (s), x: %.2f (m), y: %.2f (m), Distance to goal: %.2f" %(curr_time - start_time, *curr_coor, compute_distance(goal_coor, curr_coor)), end="\r")
         collided = gazebo_sim.get_hard_collision()
         while rospy.get_time() - curr_time < 0.1:
             time.sleep(0.01)

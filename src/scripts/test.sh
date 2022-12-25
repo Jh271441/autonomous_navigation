@@ -4,6 +4,7 @@ for i in {0..49} ; do
         for j in {1..10} ; do            
             # run the test
             python3 run.py --world_idx $n
+            ps -ef | grep ros | grep -v grep | awk {'print"kill -9 " $2'} | sh
             sleep 5
         done
 done
