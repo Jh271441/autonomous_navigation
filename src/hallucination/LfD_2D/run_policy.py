@@ -67,6 +67,7 @@ class Predictor:
         self.boundary[2 * n:3 * n][:, 1] = yy
         self.boundary[3 * n:][:, 1] = yy
 
+    # 里程计回调函数，更新机器人当前位姿
     def update_status(self, msg):
         q1 = msg.pose.pose.orientation.x
         q2 = msg.pose.pose.orientation.y
@@ -76,6 +77,7 @@ class Predictor:
         self.Y = msg.pose.pose.position.y
         self.PSI = np.arctan2(2 * (q0*q3 + q1*q2), (1 - 2*(q2**2+q3**2)))
 
+    # 静态成员函数，返回变化后的globalpath
     @staticmethod
     def transform_lg(gp, X, Y, PSI):
         R_r2i = np.matrix([[np.cos(PSI), -np.sin(PSI), X], [np.sin(PSI), np.cos(PSI), Y], [0, 0, 1]])
@@ -85,11 +87,14 @@ class Predictor:
         pr = np.matmul(R_i2r, pi.T)
         return np.asarray(pr[:2, :]).T
 
+    # 全局路径回调函数，根据globalplan的路径进行操作
     def update_global_path(self, msg):
+        # 先取出全局路径中的各个位姿
         gp = []
         for pose in msg.poses:
             gp.append([pose.pose.position.x, pose.pose.position.y])
         gp = np.array(gp)
+        # 数据平滑去噪，窗口长度为19，拟合多项式为3阶
         x = gp[:, 0]
         try:
             xhat = scipy.signal.savgol_filter(x, 19, 3)
@@ -100,14 +105,17 @@ class Predictor:
             yhat = scipy.signal.savgol_filter(y, 19, 3)
         except:
             yhat = y
-
+        # 两个向量按列合并成矩阵
         gphat = np.column_stack((xhat, yhat))
+        # 转化成列表，列表为2维列表
         gphat.tolist()
         self.global_path = self.transform_lg(gphat, self.X, self.Y, self.PSI)
         self.local_goal = self.get_local_goal(self.global_path)
         self.local_path_dir = self.get_local_path_dir(self.global_path)
 
+    # 设置局部目标
     def get_local_goal(self, gp):
+        # 初始化两个点
         local_goal = np.zeros(2)
         odom = np.zeros(2)
         if len(gp) > 0:
@@ -115,6 +123,7 @@ class Predictor:
                 odom = gp[0]
             for wp in gp:
                 dist = np.linalg.norm(wp - odom)
+                # local goal设置为global_path上距起点1.5m长的点
                 if dist > self.params.local_goal_dist:
                     break
             local_goal = wp - odom
@@ -122,6 +131,7 @@ class Predictor:
 
         return local_goal.astype(np.float32)
 
+    # 设置local_path的方向
     def get_local_path_dir(self, gp):
         lp_dir = 0
         prev_wp = np.zeros(2)
@@ -189,6 +199,7 @@ class Predictor:
         self.clipped_scan = np.minimum(self.raw_scan, self.params.laser_max_range).astype(np.float32)
 
     def update_cmd_vel(self,):
+        # 如果没有雷达信息或没有局部目标点，返回
         if self.clipped_scan is None or self.local_goal is None:
             return
 
@@ -224,6 +235,7 @@ class Predictor:
         else:
             scan = torch.from_numpy(self.clipped_scan[None]).to(self.params.device)
             local_goal = torch.from_numpy(self.local_goal[None]).to(self.params.device)
+            # 速度由model直接给出
             cmd = self.policy(scan, local_goal)
             cmd = cmd[0].detach().cpu().numpy()                    # remove batch size
             self.v, self.w = cmd
@@ -252,23 +264,24 @@ class Predictor:
 
 
 if __name__ == '__main__':
-
+    # 获取当前的绝对路径，上一层的上一层，即hallucination
     repo_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+    # 模型及模型参数对应的路径
     folder_path = os.path.join("interesting_models", "LfD_2D", "2m_per_sec")
     params_path = os.path.join(repo_path, folder_path, "params.json")
     model_path = os.path.join(repo_path, folder_path, "trained_models", "model_1000")
-
+    # 参数读取和设置
     params = TrainingParams(params_path, train=False)
     device = torch.device("cpu")
 
     params.device = device
     params.local_goal_dist = local_goal_dist
     params.laser_max_range = laser_max_range
-
+    # 模型，模型参数
     model = LfD_2D_model(params).to(device)
     assert os.path.exists(model_path)
     model.load_state_dict(torch.load(model_path, map_location=device))
-
+    # 预测，用于更新路径、里程计、雷达扫描
     predictor = Predictor(model, params)
 
     rospy.init_node('context_classifier', anonymous=True)
@@ -286,6 +299,7 @@ if __name__ == '__main__':
         try:
             now = rospy.Time.now()
             if prev_cmd_time is None or (now - prev_cmd_time).to_sec() >= update_dt:
+                # 关键:更新并发布速度
                 predictor.update_cmd_vel()
                 vel_msg = Twist()
                 vel_msg.linear.x = predictor.v

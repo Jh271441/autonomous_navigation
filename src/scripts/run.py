@@ -8,6 +8,8 @@ import numpy as np
 import rospy
 import rospkg
 
+from geometry_msgs.msg import Twist, PointStamped, PoseStamped
+from nav_msgs.msg import Path, Odometry
 from gazebo_simulation import GazeboSimulation
 
 INIT_POSITION = [-2, 3, 1.57]  # in world frame
@@ -25,6 +27,11 @@ def path_coord_to_gazebo_coord(x, y):
         gazebo_y = y * (RADIUS * 2) + c_shift
 
         return (gazebo_x, gazebo_y)
+
+def pub_goal_point(goal_point):
+    _pub_goal_point = rospy.Publisher('/goal_point', PointStamped, queue_size=1)
+    _pub_goal_point.publish(goal_point)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description = 'test BARN navigation challenge')
@@ -55,7 +62,7 @@ if __name__ == "__main__":
         'world_name:=' + world_name,
         'gui:=' + ("true" if args.gui else "false")
     ])
-    time.sleep(7)  # sleep to wait until the gazebo being created
+    time.sleep(7.5)  # sleep to wait until the gazebo being created
     
     rospy.init_node('gym', anonymous=True) #, log_level=rospy.FATAL)
     rospy.set_param('/use_sim_time', True)
@@ -66,6 +73,15 @@ if __name__ == "__main__":
     init_coor = (INIT_POSITION[0], INIT_POSITION[1])
     goal_coor = (INIT_POSITION[0] + GOAL_POSITION[0], INIT_POSITION[1] + GOAL_POSITION[1])
     
+    # 发送目标位置
+    goal_point = PointStamped()
+    goal_point.header.frame_id = 'odom'
+    goal_point.point.x = GOAL_POSITION[0]
+    goal_point.point.y = GOAL_POSITION[1]
+
+    # 轨迹
+
+
     pos = gazebo_sim.get_model_state().pose.position
     curr_coor = (pos.x, pos.y)
     collided = True
@@ -93,6 +109,29 @@ if __name__ == "__main__":
         'goal_x:=0',
         'goal_y:=10'
     ])
+    #    # DWA example
+    # # launch_file = join(base_path, '..', 'jackal_helper/launch/move_base_teb.launch')
+    # launch_file = join(base_path, '..', 'jackal_helper/launch/move_base_DWA.launch')
+    # nav_stack_process = subprocess.Popen([
+    #     'roslaunch',
+    #     launch_file,
+    # ])
+    
+    # # Make sure your navigation stack recives a goal of (0, 10, 0), which is 10 meters away
+    # # along postive y-axis.
+    # import actionlib
+    # from geometry_msgs.msg import Quaternion
+    # from move_base_msgs.msg import MoveBaseGoal, MoveBaseAction
+    # nav_as = actionlib.SimpleActionClient('/move_base', MoveBaseAction)
+    # mb_goal = MoveBaseGoal()
+    # mb_goal.target_pose.header.frame_id = 'odom'
+    # mb_goal.target_pose.pose.position.x = GOAL_POSITION[0]
+    # mb_goal.target_pose.pose.position.y = GOAL_POSITION[1]
+    # mb_goal.target_pose.pose.position.z = 0
+    # mb_goal.target_pose.pose.orientation = Quaternion(0, 0, 0, 1)
+    # # 采用action通信发送目标位置
+    # nav_as.wait_for_server()
+    # nav_as.send_goal(mb_goal)
 
     ##########################################################################################
     ## 2. Start navigation
@@ -120,6 +159,8 @@ if __name__ == "__main__":
         pos = gazebo_sim.get_model_state().pose.position
         curr_coor = (pos.x, pos.y)
         print("Time: %.2f (s), x: %.2f (m), y: %.2f (m), Distance to goal: %.2f" %(curr_time - start_time, *curr_coor, compute_distance(goal_coor, curr_coor)), end="\r")
+
+        pub_goal_point(goal_point)
         collided = gazebo_sim.get_hard_collision()
         while rospy.get_time() - curr_time < 0.1:
             time.sleep(0.01)

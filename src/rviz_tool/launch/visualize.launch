@@ -1,5 +1,5 @@
 <launch>
     <arg name="rviz_config" default="$(find rviz_tool)/config/rviz.rviz" />
     <node pkg="rviz" type="rviz" name="rviz" args="-d $(arg rviz_config)"/>
-    
+    <node pkg="rviz_tool" type="get_path.py" name="get_path" />
 </launch>

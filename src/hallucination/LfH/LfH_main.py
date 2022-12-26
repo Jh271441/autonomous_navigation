@@ -51,7 +51,7 @@ class TrainingParams(AttrDict):
 
 
 def train(params):
-    device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     params.device = device
     training_params = params.training_params
@@ -112,9 +112,9 @@ def train(params):
             loss_details.append(loss_detail)
 
             num_batch = i_batch + epoch * training_params.batch_per_epoch
-            if num_batch % 10 == 0:
-                plot_opt(writer, reference_pts, recon_control_points, loc, size, num_batch)
-                plot_obs_dist(writer, params, full_traj, loc_mu, loc_log_var, size_mu, size_log_var, num_batch)
+            # if num_batch % 10 == 0:
+                # plot_opt(writer, reference_pts, recon_control_points, loc, size, num_batch)
+                # plot_obs_dist(writer, params, full_traj, loc_mu, loc_log_var, size_mu, size_log_var, num_batch)
             print("{}/{}, {}/{}".format(epoch + 1, training_params.epochs,
                                         i_batch + 1, training_params.batch_per_epoch))
             if i_batch + 1 == training_params.batch_per_epoch:
