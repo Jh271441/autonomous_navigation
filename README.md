@@ -1,5 +1,8 @@
 # autonomius_navigation_project_2022w
 2022冬学期 智能移动机器人大作业
+
+https://github.com/Jh142857/autonomous_navigation
+
 ![](demo/demo.gif)
 ## 0 代码结构与分工
 此次作业由陈俊豪和田娅斌两人共同完成，贡献基本各占50%。
