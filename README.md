@@ -1,5 +1,6 @@
 # autonomius_navigation_project_2022w
 2022冬学期 智能移动机器人大作业
+![](demo/demo.gif)
 ## 1 导航算法：Learn from Hallucination
 算法原理如下：
 - 在自由空间中使用随机策略$\pi$收集自由空间中的运动规划$(p, c_c, c_g)$，得到运动规划数据集$P$；
@@ -38,7 +39,9 @@ catkin_make
 source ./devel/setup.bash(.zsh)
 ```
 ### 2.4 运行
-单独测试（打开gui界面）：
+单独测试
+- 打开gazebo gui，加上--gui
+- 打开rviz可视化，加上--rviz
 ```bash
 cd src/scripts
 sudo chmod +x ./run.py

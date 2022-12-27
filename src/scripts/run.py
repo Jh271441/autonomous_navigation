@@ -38,6 +38,7 @@ if __name__ == "__main__":
     parser.add_argument('--world_idx', type=int, default=0)
     parser.add_argument('--gui', action="store_true")
     parser.add_argument('--out', type=str, default="out.txt")
+    parser.add_argument('--rviz', action="store_true")
     args = parser.parse_args()
     
     ##########################################################################################
@@ -60,7 +61,8 @@ if __name__ == "__main__":
         'roslaunch',
         launch_file,
         'world_name:=' + world_name,
-        'gui:=' + ("true" if args.gui else "false")
+        'gui:=' + ("true" if args.gui else "false"),
+        'rviz:=' + ("true" if args.rviz else "false")
     ])
     time.sleep(7.5)  # sleep to wait until the gazebo being created
     
