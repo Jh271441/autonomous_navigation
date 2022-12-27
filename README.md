@@ -1,6 +1,24 @@
 # autonomius_navigation_project_2022w
 2022冬学期 智能移动机器人大作业
 ![](demo/demo.gif)
+## 0 代码结构与分工
+此次作业由陈俊豪和田娅斌两人共同完成，贡献基本各占50%。
+
+代码结构如下：
+- eband_local_planner：ROS内置包
+- hallucination：主要代码实现部分，LfH算法（[参考文献](https://ieeexplore.ieee.org/abstract/document/9636402)，[参考代码](https://github.com/Daffan/nav-competition-icra2022/tree/LfH)）
+  - data：不同最大速度下的数据集
+  - ego_timer：Ego_planner
+  - interesting_models：存放训练练好的模型权重
+  - LfD2D/3D：分别对应2D导航和3D导航时运动规划器模型及训练
+  - LfH：训练hallucination函数
+- jackal
+- jackal_desktop
+- jackal_helper
+- jackal_simulator
+- res
+- rviz_tool：可视化部分代码
+- scripts
 ## 1 导航算法：Learn from Hallucination
 算法原理如下：
 - 在自由空间中使用随机策略$\pi$收集自由空间中的运动规划$(p, c_c, c_g)$，得到运动规划数据集$P$；
